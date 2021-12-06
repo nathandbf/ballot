@@ -20,4 +20,19 @@ public interface BallotDAO {
      */
     List<Pauta> buscarPautasPorNomeStatus(String nome, Integer status);
 
+    /**
+     * Método responsavel por procurar uma pauta pelo nome e o status.
+     * @param idPauta ID da pauta
+     * @param status status da pauta
+     * @return Objeto Pauta se o Id da pauta estiver no status solicitado, null caso contrario
+     */
+    Pauta buscarPautaPorIdStatus(Integer idPauta, Integer status);
+
+    /**
+     * Método responsavel por salvar alterações a pauta na persistencia
+     * @param pauta O objeto pauta a ser salvo
+     * @return O Objeto Pauta Salvo
+     */
+    Pauta salvarPauta(Pauta pauta);
+
 }

@@ -23,4 +23,14 @@ public class BallotDAOImpl implements BallotDAO {
     public List<Pauta> buscarPautasPorNomeStatus(String nome, Integer status) {
         return pautaJPARepository.findByNomeAndStatusPauta(nome,status);
     }
+
+    @Override
+    public Pauta buscarPautaPorIdStatus(Integer idPauta, Integer status) {
+        return pautaJPARepository.findByIdPautaAndStatusPauta(idPauta,status);
+    }
+
+    @Override
+    public Pauta salvarPauta(Pauta pauta) {
+        return pautaJPARepository.save(pauta);
+    }
 }
