@@ -1,2 +1,4 @@
-package com.sc.ballot.constant;public enum PautaStatus {
+package com.sc.ballot.constant;
+
+public enum PautaStatus {
 }

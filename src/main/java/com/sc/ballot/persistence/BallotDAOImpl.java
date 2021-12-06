@@ -1,2 +1,4 @@
-package com.sc.ballot.persistence;public class BallotDAOImpl {
+package com.sc.ballot.persistence;
+
+public class BallotDAOImpl {
 }

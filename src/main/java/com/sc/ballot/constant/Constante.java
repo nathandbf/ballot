@@ -1,2 +1,4 @@
-package com.sc.ballot.constant;public class Constante {
+package com.sc.ballot.constant;
+
+public class Constante {
 }

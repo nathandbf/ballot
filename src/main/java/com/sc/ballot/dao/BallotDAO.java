@@ -1,2 +1,4 @@
-package com.sc.ballot.dao;public interface BallotDAO {
+package com.sc.ballot.dao;
+
+public interface BallotDAO {
 }

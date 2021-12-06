@@ -1,2 +1,4 @@
-package com.sc.ballot.controller;public class BallotController {
+package com.sc.ballot.controller;
+
+public class BallotController {
 }

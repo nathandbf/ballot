@@ -1,2 +1,4 @@
-package com.sc.ballot.entity;public interface Response {
+package com.sc.ballot.entity;
+
+public interface Response {
 }

@@ -1,2 +1,4 @@
-package com.sc.ballot.repository;public interface PautaJPARepository {
+package com.sc.ballot.repository;
+
+public interface PautaJPARepository {
 }

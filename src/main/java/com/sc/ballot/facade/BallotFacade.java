@@ -1,2 +1,4 @@
-package com.sc.ballot.facade;public class BallotFacade {
+package com.sc.ballot.facade;
+
+public class BallotFacade {
 }
