@@ -45,4 +45,17 @@ public class Api {
     public Response abrirPauta(Integer idPauta, Integer tempoSegundos, String idUsuario){
         return facade.abrirPauta(idPauta,tempoSegundos,idUsuario);
     }
+
+    /**
+     * Método que inicia o fluxo de votação de uma pauta
+     * @param voto String "Sim" or "Não"
+     * @param idPauta Id da pauta a ser votada
+     * @param idUsuario  ID do usuario que solicitou o voto (seu CPF)
+     * @return Objeto Response com o código e status da operação
+     */
+    @PostMapping("/v1/votar")
+    @ResponseBody
+    public Response votar(String voto, Integer idPauta, String idUsuario ){
+        return facade.votar(voto,idPauta,idUsuario);
+    }
 }

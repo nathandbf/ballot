@@ -39,4 +39,15 @@ public class BallotFacade {
         return response;
     }
 
+    /**
+     * Método responsavel por unificar os métodos do fluxo votar
+     * @param voto String "Sim" or "Não"
+     * @param idPauta Id da pauta a ser iniciada
+     * @param idUsuario  ID do usuario que solicitou o voto (seu CPF)
+     * @return Objeto Response com o código e status da operação
+     */
+    public Response votar(String voto, Integer idPauta, String idUsuario) {
+        return ballotController.votar(voto, idPauta, idUsuario);
+    }
+
 }

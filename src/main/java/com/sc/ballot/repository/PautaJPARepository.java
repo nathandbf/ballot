@@ -11,4 +11,6 @@ public interface PautaJPARepository extends JpaRepository<Pauta, Integer> {
     List<Pauta> findByNomeAndStatusPauta(String nome, Integer status);
 
     Pauta findByIdPautaAndStatusPauta(Integer idPauta, Integer status);
+
+    Pauta findByIdPauta(Integer idPauta);
 }

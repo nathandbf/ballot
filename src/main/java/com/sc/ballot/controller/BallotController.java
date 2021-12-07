@@ -6,6 +6,7 @@ import com.sc.ballot.dao.BallotDAO;
 import com.sc.ballot.entity.GenericResponse;
 import com.sc.ballot.entity.Pauta;
 import com.sc.ballot.entity.Response;
+import com.sc.ballot.entity.Voto;
 import com.sc.ballot.util.Validador;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 @Controller
@@ -92,7 +94,7 @@ public class BallotController {
 
     /**
      * Método responsavel por verificar se o tempo de abertura da votação é válido, caso não seta o TEMPO_PADRAO_PAUTA
-     * @param tempoSegundos
+     * @param tempoSegundos tempo em segundos
      * @return TempoEmSegundos Validado
      */
     public Integer verificarAlterarTempoSegundos(Integer tempoSegundos) {
@@ -184,5 +186,154 @@ public class BallotController {
             //TODO LOG
         }
     }
+
+    /**
+     * Método responsavel por realizar o voto.
+     * R1 - Verificar a integridade do voto
+     * R2 - Verificar se a pauta está com o status ANDAMENTO
+     * R3 - Verificar se o usuario já votou nesta pauta
+     * R4 - Verificar válidade do ID (CPF) do usuario
+     * R5 - Salvar voto;
+     * @param voto String "Sim" or "Não"
+     * @param idPauta Id da pauta a ser votada
+     * @param idUsuario  ID do usuario que solicitou o voto (seu CPF)
+     * @return Objeto Response com o código e status da operação
+     */
+    public Response votar(String voto, Integer idPauta, String idUsuario) {
+        GenericResponse response = new GenericResponse();
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+        try {
+            Future<Boolean> statusCpfAssociado = executor.submit(() -> validarCpfAssociado(idUsuario));
+            if (!verificarIntegridadeVoto(voto)) {
+                response.setCode(400);
+                response.setMessage(Constante.ERROR_400 + Constante.ERROR_400_COMP_VOTAR);
+                //TODO LOG
+                return response;
+            }
+            Pauta pautaVotagem = buscarPautaPorId(idPauta);
+            response = validarPautaVotacaoResponse(pautaVotagem);
+            if (response.getMessage() != null){
+                //TODO LOG
+                return response;
+            }
+
+            if(verificarVotoRepetido(pautaVotagem,idUsuario) == true){
+                response.setCode(403);
+                response.setMessage(Constante.ERROR_403 + Constante.ERROR_403_REPETIDO);
+                //TODO LOG
+                return response;
+            }
+
+            if(!statusCpfAssociado.get(10,TimeUnit.SECONDS)){
+                response.setCode(403);
+                response.setMessage(Constante.ERROR_403 + Constante.ERROR_403_VOTO);
+                //TODO LOG
+                return response;
+            }
+            inserirVoto(voto,pautaVotagem,idUsuario);
+            response.setCode(200);
+            response.setMessage(Constante.PAUTA_200_VOTO);
+
+        }catch (Exception e){
+            response.setCode(500);
+            response.setMessage(Constante.ERROR_500);
+            e.printStackTrace(); //TODO LOGAR
+        } finally {
+            executor.shutdown();
+        }
+        return response;
+    }
+
+    /**
+     * Método auxiliar que realiza a inserção do voto no banco
+     * @param voto
+     * @param pautaVotagem
+     * @param idUsuario
+     * @return
+     */
+    private Voto inserirVoto(String voto, Pauta pautaVotagem, String idUsuario) {
+        Voto votoObject = new Voto();
+        votoObject.setCpfAssociado(idUsuario);
+        votoObject.setPauta(pautaVotagem);
+        if(Constante.VOTO_OPCAO1.equalsIgnoreCase(voto)){
+            votoObject.setIdentificadorVoto(Constante.VOTO_OPCAO1_INT);
+        }else{
+            votoObject.setIdentificadorVoto(Constante.VOTO_OPCAO2_INT);
+        }
+        return ballotDAO.inserirVoto(votoObject);
+    }
+
+    /**
+     * Método auxiliar que verifica se o voto já foi realizado em uma votação especifica.
+     * @param pauta Pauta a ser votada
+     * @param cpfAssociado  ID do usuario que solicitou o voto (seu CPF)
+     * @return TRUE se o voto já foi feito, FALSE caso o voto ainda não foi realizado
+     */
+    private boolean verificarVotoRepetido(Pauta pauta, String cpfAssociado) {
+        if(ballotDAO.buscarVoto(pauta,cpfAssociado) == null){
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Método auxiliar que verifica se a pauta está no status de ANDAMENTO, caso não estiver um objeto response é preparado informando o erro.
+     * @param pautaVotagem
+     * @return Objeto response com o erro se a pauta não estiver em ANDAMENTO, o mesmo objeto caso contrario.
+     */
+    private GenericResponse validarPautaVotacaoResponse(Pauta pautaVotagem) {
+        GenericResponse response = new GenericResponse();
+        if (pautaVotagem == null) {
+            response.setCode(400);
+            response.setMessage(Constante.ERROR_400 +  Constante.ERROR_400_COMP_PAUTA_NAO_EXISTE);
+        } else if (pautaVotagem.getStatusPauta() == PautaStatus.ANDAMENTO.getStatus()) {
+            return response;
+        }
+        else if (pautaVotagem.getStatusPauta() == PautaStatus.NAO_INICIALIZADO.getStatus()) {
+            response.setCode(400);
+            response.setMessage(Constante.ERROR_400 +  Constante.ERROR_400_COMP_PAUTA_NAO_INICIALIZADA);
+        }
+        else if (pautaVotagem.getStatusPauta() == PautaStatus.ENCERRADO.getStatus()) {
+            response.setCode(400);
+            response.setMessage(Constante.ERROR_400 +  Constante.ERROR_400_COMP_PAUTA_ENCERRADA);
+        }
+        return response;
+    }
+
+    /**
+     * Método auxiliar responsavel por buscar e verificar a existencia de uma pauta com um status especifico
+     * @param idPauta id da pauta
+     * @return Objeto Pauta se o Id da pauta estiver registrado, null caso contrario
+     */
+    private Pauta buscarPautaPorId(Integer idPauta) {
+        return ballotDAO.buscarPautaPorId(idPauta);
+    }
+
+    /**
+     * Método que verifica se o voto é uma das duas opções válidas ignorando maisculas ou minusculas.
+     * @param voto
+     * @return TRUE se o voto for valido, FALSE caso contrario
+     */
+    private boolean verificarIntegridadeVoto(String voto) {
+        if(Constante.VOTO_OPCAO1.equalsIgnoreCase(voto) ||
+                Constante.VOTO_OPCAO2.equalsIgnoreCase(voto) ){
+            return true;
+        }
+        return false;
+    }
+
+
+
+    /**
+     * Valida se o CPF está aprovado para votar baseado em um serviço externo.
+     * @param cpf
+     * @return TRUE se o cpf for aprovado para votar, FALSE caso não for
+     */
+    public boolean validarCpfAssociado(String cpf) {
+        ExternalCallController externalCallController = new ExternalCallController();
+        return externalCallController.validadorCpf(cpf);
+    }
+
+
 
 }

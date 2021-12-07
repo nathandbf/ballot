@@ -5,15 +5,29 @@ public class Constante {
     public static final Integer TEMPO_PADRAO_PAUTA = 60;
     public static final Integer MAX_THREAD = 8;
 
+    public static final String VOTO_OPCAO1 = "SIM";
+    public static final Integer VOTO_OPCAO1_INT = 1;
+    public static final String VOTO_OPCAO2 = "NÃO";
+    public static final Integer VOTO_OPCAO2_INT = 2;
 
     public static final String PAUTA_200_CADASTRO = "PAUTA INSERIDA COM SUCESSO!";
     public static final String PAUTA_200_ABERTURA = "PAUTA ABERTA COM SUCESSO!";
+    public static final String PAUTA_200_VOTO = "VOTO REGISTRADO COM SUCESSO!";
 
     public static final String ERROR_400 = "BAD REQUEST ";
     public static final String ERROR_400_COMP_ABERTURA_PAUTA = " - NENHUMA PAUTA NÃO INICIALIZADA FOI ENCONTRADA PARA ESTE ID";
+    public static final String ERROR_400_COMP_VOTAR = " - O VOTO NÃO ESTÁ EM UM FORMATO VÁLIDO";
+    public static final String ERROR_400_COMP_PAUTA_NAO_EXISTE = " - NENHUMA PAUTA FOI ENCONTRADA PARA ESTE ID";
+    public static final String ERROR_400_COMP_PAUTA_NAO_INICIALIZADA = " - A PAUTA SOLICITADA, AINDA NÃO ESTÁ ABERTA.";
+    public static final String ERROR_400_COMP_PAUTA_ENCERRADA = " - A PAUTA SOLICITADA, JÁ ENCERROU SUA VOTAÇÃO.";
 
     public static final String ERROR_403 = "FORBIDDEN ";
     public static final String ERROR_403_PAUTA = " - UMA PAUTA COM ESSE NOME ENCONTRA-SE EM ANDAMENTO OU NÃO INICIALIZADA";
+    public static final String ERROR_403_REPETIDO = " - SEU CPF JÁ VOTOU NESTA PAUTA";
+    public static final String ERROR_403_VOTO = " - SEU CPF NÃO ESTÁ AUTORIZADO A VOTAR NO MOMENTO";
+
     public static final String ERROR_500 = "INTERNAL SERVER ERROR";
+
+    public static final String UNABLE_TO_VOTE = "UNABLE_TO_VOTE";
 
 }
