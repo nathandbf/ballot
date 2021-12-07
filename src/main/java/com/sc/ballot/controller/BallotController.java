@@ -1,10 +1,13 @@
 package com.sc.ballot.controller;
 
 import com.sc.ballot.constant.Constante;
+import com.sc.ballot.constant.ConstanteMsgLog;
 import com.sc.ballot.constant.PautaStatus;
 import com.sc.ballot.dao.BallotDAO;
 import com.sc.ballot.entity.*;
 import com.sc.ballot.util.Validador;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -20,6 +23,11 @@ public class BallotController {
 
     @Autowired
     private BallotDAO ballotDAO;
+
+    @Autowired
+    private MensagemController mensagemController;
+
+    Logger logger = LoggerFactory.getLogger(BallotController.class);
 
     /**
      * Método responsavel por cadastrar uma nova pauta na persistencia
@@ -46,22 +54,24 @@ public class BallotController {
                     ballotDAO.cadastrarPauta(pauta);
                     response.setCode(200);
                     response.setMessage(Constante.PAUTA_200_CADASTRO);
-                    //TODO LOGAR
+                    logger.info(ConstanteMsgLog.CADASTRO_SUCESSO.formatted(idUsuario,pauta.getId()));
                 } else {
                     response.setCode(403);
                     response.setMessage(Constante.ERROR_403 + Constante.ERROR_403_PAUTA);
-                    //TODO LOGAR
+                    logger.warn(ConstanteMsgLog.CADASTRO_NOME_EXISTENTE.formatted(idUsuario,nome));
                 }
             }catch (Exception e){
                 response.setCode(500);
                 response.setMessage(Constante.ERROR_500);
-                e.printStackTrace(); //TODO LOGAR
+                String param = "nome: "+ nome;
+                logger.error(ConstanteMsgLog.ERRO_LOG.formatted(idUsuario, "cadastrarPauta()", param, e.getMessage()));
             }
         }
         else{
             response.setCode(400);
-            response.setMessage(Constante.ERROR_400);
-            //TODO LOGAR
+            response.setMessage(Constante.ERROR_400 + Constante.ERROR_400_COMP_NOME_NULL);
+            String param = "nome: "+ nome;
+            logger.error(ConstanteMsgLog.ERRO_LOG_WE.formatted(idUsuario, "cadastrarPauta()", param));
         }
         return response;
     }
@@ -112,28 +122,29 @@ public class BallotController {
      * @return Objeto Response com o código e status da operação
      */
     public GenericResponse abrirPauta(Integer idPauta, Integer tempoSegundos, String idUsuario) {
-        GenericResponse genericResponse = new GenericResponse();
+        GenericResponse response = new GenericResponse();
         try {
             Pauta pauta = buscarExistenciaPauta(idPauta,PautaStatus.NAO_INICIALIZADO.getStatus());
             if (pauta == null) {
-                genericResponse.setCode(400);
-                genericResponse.setMessage(Constante.ERROR_400 +  Constante.ERROR_400_COMP_ABERTURA_PAUTA);
-                //TODO LOG
+                response.setCode(400);
+                response.setMessage(Constante.ERROR_400 +  Constante.ERROR_400_COMP_ABERTURA_PAUTA);
+                logger.warn(ConstanteMsgLog.ABRIR_PAUTA_ID_INEXISTENTE.formatted(idUsuario,idPauta));
             }
             else {
                 pauta.setDuracaoSegundos(tempoSegundos);
                 pauta.setStatusPauta(PautaStatus.ANDAMENTO.getStatus());
                 ballotDAO.salvarPauta(pauta);
-                genericResponse.setCode(200);
-                genericResponse.setMessage(Constante.PAUTA_200_ABERTURA);
-                //TODO LOG
+                response.setCode(200);
+                response.setMessage(Constante.PAUTA_200_ABERTURA);
+                logger.info(ConstanteMsgLog.PAUTA_ABERTA_SUCESSO.formatted(idUsuario,pauta.getId(),tempoSegundos));
             }
         }catch (Exception e){
-            genericResponse.setCode(500);
-            genericResponse.setMessage(Constante.ERROR_500);
-            e.printStackTrace(); //TODO LOGAR
+            response.setCode(500);
+            response.setMessage(Constante.ERROR_500);
+            String param = "idPauta: "+ idPauta + "tempoSegundos: "+ tempoSegundos;
+            logger.error(ConstanteMsgLog.ERRO_LOG.formatted(idUsuario, "abrirPauta()", param, e.getMessage()));
         }
-        return genericResponse;
+        return response;
     }
 
     /**
@@ -148,7 +159,6 @@ public class BallotController {
         }
         return ballotDAO.buscarPautaPorIdStatus(idPauta,status);
     }
-
 
     /**
      * Método responsavvel por disparar a thread para o fechamento da pauta depois do tempo determinado
@@ -171,16 +181,17 @@ public class BallotController {
             Pauta pauta = buscarExistenciaPauta(idPauta,PautaStatus.ANDAMENTO.getStatus());
             pauta.setStatusPauta(PautaStatus.ENCERRADO.getStatus());
             ballotDAO.salvarPauta(pauta);
-            //TODO LOG
-            //TODO MSG FINALIZACAO
-            System.out.println("Pauta Id:" + pauta.getId() + " finalizada");
+            logger.info(ConstanteMsgLog.PAUTA_FECHADA_SUCESSO.formatted(pauta.getId()));
+            mensagemController.enviarMensagemConclusao(pauta);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
-            //TODO LOG
+            String param = "idPauta: "+ idPauta + "tempoSegundos: "+ tempoSegundos;
+            logger.error(ConstanteMsgLog.ERRO_FECHAR_TO.formatted( "fecharPauta()", param, ie.getMessage()));
         }
         catch (Exception e) {
             Thread.currentThread().interrupt();
-            //TODO LOG
+            String param = "idPauta: "+ idPauta + "tempoSegundos: "+ tempoSegundos;
+            logger.error(ConstanteMsgLog.ERRO_FECHAR.formatted("fecharPauta()", param, e.getMessage()));
         }
     }
 
@@ -204,37 +215,37 @@ public class BallotController {
             if (!verificarIntegridadeVoto(voto)) {
                 response.setCode(400);
                 response.setMessage(Constante.ERROR_400 + Constante.ERROR_400_COMP_VOTAR);
-                //TODO LOG
+                logger.warn(ConstanteMsgLog.VOTO_FORMATO_INVALIDO.formatted(idUsuario,voto));
                 return response;
             }
             Pauta pautaVotagem = buscarPautaPorId(idPauta);
             response = validarPautaVotacaoResponse(pautaVotagem);
             if (response.getMessage() != null){
-                //TODO LOG
+                logger.warn(ConstanteMsgLog.VOTO_NAO_ANDAMENTO.formatted(idUsuario,idPauta));
                 return response;
             }
-
-            if(verificarVotoRepetido(pautaVotagem,idUsuario) == true){
+            if(verificarVotoRepetido(pautaVotagem,idUsuario)){
                 response.setCode(403);
                 response.setMessage(Constante.ERROR_403 + Constante.ERROR_403_REPETIDO);
-                //TODO LOG
+                logger.warn(ConstanteMsgLog.VOTO_REPETIDO.formatted(idUsuario,idPauta));
                 return response;
             }
 
             if(!statusCpfAssociado.get(10,TimeUnit.SECONDS)){
                 response.setCode(403);
                 response.setMessage(Constante.ERROR_403 + Constante.ERROR_403_VOTO);
-                //TODO LOG
+                logger.warn(ConstanteMsgLog.CPF_NAO_AUTORIZADO.formatted(idUsuario));
                 return response;
             }
             inserirVoto(voto,pautaVotagem,idUsuario);
             response.setCode(200);
             response.setMessage(Constante.PAUTA_200_VOTO);
-
+            logger.info(ConstanteMsgLog.VOTO_SUCESSO.formatted(idUsuario,idPauta,voto));
         }catch (Exception e){
             response.setCode(500);
             response.setMessage(Constante.ERROR_500);
-            e.printStackTrace(); //TODO LOGAR
+            String param = "voto: "+ voto +"idPauta: "+ idPauta;
+            logger.error(ConstanteMsgLog.ERRO_LOG.formatted(idUsuario, "votar()", param, e.getMessage()));
         } finally {
             executor.shutdown();
         }
@@ -243,10 +254,10 @@ public class BallotController {
 
     /**
      * Método auxiliar que realiza a inserção do voto no banco
-     * @param voto
-     * @param pautaVotagem
-     * @param idUsuario
-     * @return
+     * @param voto a string com o voto do usuario
+     * @param pautaVotagem a pauta da votacao
+     * @param idUsuario cpf do usuario votando
+     * @return Voto inserido no banco
      */
     private Voto inserirVoto(String voto, Pauta pautaVotagem, String idUsuario) {
         Voto votoObject = new Voto();
@@ -267,10 +278,7 @@ public class BallotController {
      * @return TRUE se o voto já foi feito, FALSE caso o voto ainda não foi realizado
      */
     private boolean verificarVotoRepetido(Pauta pauta, String cpfAssociado) {
-        if(ballotDAO.buscarVoto(pauta,cpfAssociado) == null){
-            return false;
-        }
-        return true;
+        return (ballotDAO.buscarVoto(pauta,cpfAssociado) != null);
     }
 
     /**

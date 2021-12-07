@@ -18,6 +18,7 @@ public class Constante {
 
 
     public static final String ERROR_400 = "BAD REQUEST ";
+    public static final String ERROR_400_COMP_NOME_NULL = " - NOME NÃO PODE SER NULL";
     public static final String ERROR_400_COMP_ABERTURA_PAUTA = " - NENHUMA PAUTA NÃO INICIALIZADA FOI ENCONTRADA PARA ESTE ID";
     public static final String ERROR_400_COMP_VOTAR = " - O VOTO NÃO ESTÁ EM UM FORMATO VÁLIDO";
     public static final String ERROR_400_COMP_PAUTA_NAO_EXISTE = " - NENHUMA PAUTA FOI ENCONTRADA PARA ESTE ID";
@@ -36,4 +37,6 @@ public class Constante {
     public static final String STATUS_FINALIZADA = "FINALIZADO";
     public static final String STATUS_ANDAMENTO = "ANDAMENTO";
 
+    public static final String KAFKA_TOPIC ="BALLOT_MSG";
+    public static final String URL_KAFKA = "localhost:9092";
 }
