@@ -58,4 +58,16 @@ public class Api {
     public Response votar(String voto, Integer idPauta, String idUsuario ){
         return facade.votar(voto,idPauta,idUsuario);
     }
+
+    /**
+     * Método que inicia o fluxo de obter resultados de uma votação
+     * @param idPauta Id da pauta a ser consultada
+     * @param idUsuario  ID do usuario que solicitou a consulta
+     * @return
+     */
+    @GetMapping("/v1/buscarResultadosPauta")
+    @ResponseBody
+    public Response getResultadosVotacao(Integer idPauta, String idUsuario){
+        return facade.getResultadosVotacao(idPauta,idUsuario);
+    }
 }

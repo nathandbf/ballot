@@ -50,4 +50,13 @@ public class BallotFacade {
         return ballotController.votar(voto, idPauta, idUsuario);
     }
 
+    /**
+     * Método responsavel por unificar os métodos do fluxo de obter resultados de uma votação
+     * @param idPauta Id da pauta a ser consultada
+     * @param idUsuario  ID do usuario que solicitou a consulta
+     * @return
+     */
+    public Response getResultadosVotacao(Integer idPauta, String  idUsuario) {
+        return ballotController.getResultadosVotacao(idPauta,idUsuario);
+    }
 }

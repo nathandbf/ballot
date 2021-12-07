@@ -13,6 +13,9 @@ public class Constante {
     public static final String PAUTA_200_CADASTRO = "PAUTA INSERIDA COM SUCESSO!";
     public static final String PAUTA_200_ABERTURA = "PAUTA ABERTA COM SUCESSO!";
     public static final String PAUTA_200_VOTO = "VOTO REGISTRADO COM SUCESSO!";
+    public static final String PAUTA_200_BUSCA_FINALIZADA = "VOTOS PESQUISADOS COM SUCESSO!";
+    public static final String PAUTA_200_BUSCA_NAO_FINALIZADA = "VOTOS PESQUISADOS COM SUCESSO! PORÉM A PAUTA CONTINUA EM ABERTO";
+
 
     public static final String ERROR_400 = "BAD REQUEST ";
     public static final String ERROR_400_COMP_ABERTURA_PAUTA = " - NENHUMA PAUTA NÃO INICIALIZADA FOI ENCONTRADA PARA ESTE ID";
@@ -29,5 +32,8 @@ public class Constante {
     public static final String ERROR_500 = "INTERNAL SERVER ERROR";
 
     public static final String UNABLE_TO_VOTE = "UNABLE_TO_VOTE";
+
+    public static final String STATUS_FINALIZADA = "FINALIZADO";
+    public static final String STATUS_ANDAMENTO = "ANDAMENTO";
 
 }

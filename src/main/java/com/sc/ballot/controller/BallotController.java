@@ -3,10 +3,7 @@ package com.sc.ballot.controller;
 import com.sc.ballot.constant.Constante;
 import com.sc.ballot.constant.PautaStatus;
 import com.sc.ballot.dao.BallotDAO;
-import com.sc.ballot.entity.GenericResponse;
-import com.sc.ballot.entity.Pauta;
-import com.sc.ballot.entity.Response;
-import com.sc.ballot.entity.Voto;
+import com.sc.ballot.entity.*;
 import com.sc.ballot.util.Validador;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -335,5 +332,46 @@ public class BallotController {
     }
 
 
-
+    /**
+     * Método que realiza a contagem de votos de uma pauta
+     * R1 - A pauta não pode ser como NAO_INICIALIZADO
+     * @param idPauta
+     * @return Um objeto response contendo o resultado da votacao
+     */
+    public Response getResultadosVotacao(Integer idPauta, String idUsuario) {
+        GenericResponse genericResponse = new GenericResponse();
+        try{
+            Pauta pauta = buscarPautaPorId(idPauta);
+            if(PautaStatus.NAO_INICIALIZADO.getStatus()==pauta.getStatusPauta()){
+                genericResponse.setCode(400);
+                genericResponse.setMessage(Constante.ERROR_400 + Constante.ERROR_400_COMP_PAUTA_NAO_INICIALIZADA);
+                return genericResponse;
+            }
+            int countSim = 0;
+            int countNao = 0;
+            for (Voto voto:pauta.getListaVotos()) {
+                if(Constante.VOTO_OPCAO1_INT == voto.getIdentificadorVoto())
+                    countSim++;
+                else
+                    countNao++;
+            }
+            VotacaoResult votacaoResult = new VotacaoResult(pauta.getNome(), countSim, countNao, pauta.getDuracaoSegundos(),null);
+            genericResponse.setCode(200);
+            if(PautaStatus.ANDAMENTO.getStatus()==pauta.getStatusPauta()){
+                votacaoResult.setStatus(Constante.STATUS_ANDAMENTO);
+                genericResponse.setMessage(Constante.PAUTA_200_BUSCA_NAO_FINALIZADA);
+                genericResponse.setResponse(votacaoResult);
+            }
+            else{
+                votacaoResult.setStatus(Constante.STATUS_FINALIZADA);
+                genericResponse.setMessage(Constante.PAUTA_200_BUSCA_FINALIZADA);
+                genericResponse.setResponse(votacaoResult);
+            }
+        }catch (Exception e){
+            genericResponse.setCode(500);
+            genericResponse.setMessage(Constante.ERROR_500);
+            e.printStackTrace(); //TODO LOGAR
+        }
+        return genericResponse;
+    }
 }
