@@ -1,11 +1,13 @@
 package com.sc.ballot.controller;
 
 import com.sc.ballot.constant.Constante;
+import com.sc.ballot.constant.ConstanteConfig;
 import com.sc.ballot.constant.ConstanteMsgLog;
 import com.sc.ballot.constant.PautaStatus;
 import com.sc.ballot.dao.BallotDAO;
 import com.sc.ballot.entity.*;
 import com.sc.ballot.util.Validador;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +51,7 @@ public class BallotController {
                 if(pautas == null || pautas.isEmpty()){
                     Pauta pauta = new Pauta();
                     pauta.setStatusPauta(PautaStatus.NAO_INICIALIZADO.getStatus());
-                    pauta.setDuracaoSegundos(Constante.TEMPO_INICIAL_PADRAO_PAUTA);
+                    pauta.setDuracaoSegundos(ConstanteConfig.TEMPO_INICIAL_PADRAO_PAUTA);
                     pauta.setNome(nome);
                     ballotDAO.cadastrarPauta(pauta);
                     response.setCode(200);
@@ -106,7 +108,7 @@ public class BallotController {
      */
     public Integer verificarAlterarTempoSegundos(Integer tempoSegundos) {
         if(tempoSegundos == null || tempoSegundos == 0){
-            tempoSegundos = Constante.TEMPO_PADRAO_PAUTA;
+            tempoSegundos = ConstanteConfig.TEMPO_PADRAO_PAUTA;
         }
         return tempoSegundos;
     }
@@ -141,7 +143,7 @@ public class BallotController {
         }catch (Exception e){
             response.setCode(500);
             response.setMessage(Constante.ERROR_500);
-            String param = "idPauta: "+ idPauta + "tempoSegundos: "+ tempoSegundos;
+            String param = "idPauta: "+ idPauta + " tempoSegundos: "+ tempoSegundos;
             logger.error(ConstanteMsgLog.ERRO_LOG.formatted(idUsuario, "abrirPauta()", param, e.getMessage()));
         }
         return response;
@@ -166,7 +168,7 @@ public class BallotController {
      * @param tempoSegundos Tempo que a pauta deve permanecer aberta
      */
     public void prepararFechamentoPauta(Integer idPauta, Integer tempoSegundos) {
-        ExecutorService executor = Executors.newFixedThreadPool(Constante.MAX_THREAD);
+        ExecutorService executor = Executors.newFixedThreadPool(ConstanteConfig.MAX_THREAD);
         executor.submit(() -> fecharPauta(idPauta,tempoSegundos));
     }
 
@@ -185,12 +187,12 @@ public class BallotController {
             mensagemController.enviarMensagemConclusao(pauta);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
-            String param = "idPauta: "+ idPauta + "tempoSegundos: "+ tempoSegundos;
+            String param = "idPauta: "+ idPauta + " tempoSegundos: "+ tempoSegundos;
             logger.error(ConstanteMsgLog.ERRO_FECHAR_TO.formatted( "fecharPauta()", param, ie.getMessage()));
         }
         catch (Exception e) {
             Thread.currentThread().interrupt();
-            String param = "idPauta: "+ idPauta + "tempoSegundos: "+ tempoSegundos;
+            String param = "idPauta: "+ idPauta + " tempoSegundos: "+ tempoSegundos;
             logger.error(ConstanteMsgLog.ERRO_FECHAR.formatted("fecharPauta()", param, e.getMessage()));
         }
     }
@@ -241,10 +243,16 @@ public class BallotController {
             response.setCode(200);
             response.setMessage(Constante.PAUTA_200_VOTO);
             logger.info(ConstanteMsgLog.VOTO_SUCESSO.formatted(idUsuario,idPauta,voto));
-        }catch (Exception e){
+        }catch (ConstraintViolationException ec){
             response.setCode(500);
             response.setMessage(Constante.ERROR_500);
-            String param = "voto: "+ voto +"idPauta: "+ idPauta;
+            String param = "voto: "+ voto +" idPauta: "+ idPauta;
+            logger.error(ConstanteMsgLog.ERRO_VIOLACAO_BANCO.formatted(idUsuario,param, ec.getMessage()));
+        }
+        catch (Exception e){
+            response.setCode(500);
+            response.setMessage(Constante.ERROR_500);
+            String param = "voto: "+ voto +" idPauta: "+ idPauta;
             logger.error(ConstanteMsgLog.ERRO_LOG.formatted(idUsuario, "votar()", param, e.getMessage()));
         } finally {
             executor.shutdown();
@@ -289,8 +297,8 @@ public class BallotController {
     private GenericResponse validarPautaVotacaoResponse(Pauta pautaVotagem) {
         GenericResponse response = new GenericResponse();
         if (pautaVotagem == null) {
-            response.setCode(400);
-            response.setMessage(Constante.ERROR_400 +  Constante.ERROR_400_COMP_PAUTA_NAO_EXISTE);
+            response.setCode(404);
+            response.setMessage(Constante.ERROR_404 +  Constante.ERROR_404_COMP_PAUTA_NAO_EXISTE);
         } else if (pautaVotagem.getStatusPauta() == PautaStatus.ANDAMENTO.getStatus()) {
             return response;
         }
@@ -347,13 +355,20 @@ public class BallotController {
      * @return Um objeto response contendo o resultado da votacao
      */
     public Response getResultadosVotacao(Integer idPauta, String idUsuario) {
-        GenericResponse genericResponse = new GenericResponse();
+        GenericResponse response = new GenericResponse();
         try{
             Pauta pauta = buscarPautaPorId(idPauta);
+            if(pauta==null){
+                response.setCode(404);
+                response.setMessage(Constante.ERROR_404 +  Constante.ERROR_404_COMP_PAUTA_NAO_EXISTE + idPauta);
+                logger.warn(ConstanteMsgLog.CONSULTAR_PAUTA_ID_NAO_EXISTE.formatted(idUsuario,idPauta));
+                return response;
+            }
             if(PautaStatus.NAO_INICIALIZADO.getStatus()==pauta.getStatusPauta()){
-                genericResponse.setCode(400);
-                genericResponse.setMessage(Constante.ERROR_400 + Constante.ERROR_400_COMP_PAUTA_NAO_INICIALIZADA);
-                return genericResponse;
+                response.setCode(400);
+                response.setMessage(Constante.ERROR_400 + Constante.ERROR_400_COMP_PAUTA_NAO_INICIALIZADA);
+                logger.warn(ConstanteMsgLog.CONSULTA_VOTO_NAO_INICIADO.formatted(idUsuario,idPauta));
+                return response;
             }
             int countSim = 0;
             int countNao = 0;
@@ -364,22 +379,31 @@ public class BallotController {
                     countNao++;
             }
             VotacaoResult votacaoResult = new VotacaoResult(pauta.getNome(), countSim, countNao, pauta.getDuracaoSegundos(),null);
-            genericResponse.setCode(200);
+            response.setCode(200);
             if(PautaStatus.ANDAMENTO.getStatus()==pauta.getStatusPauta()){
                 votacaoResult.setStatus(Constante.STATUS_ANDAMENTO);
-                genericResponse.setMessage(Constante.PAUTA_200_BUSCA_NAO_FINALIZADA);
-                genericResponse.setResponse(votacaoResult);
+                votacaoResult.setVencedor(Constante.INDEFINIDO);
+                response.setMessage(Constante.PAUTA_200_BUSCA_NAO_FINALIZADA);
+                response.setValue(votacaoResult);
             }
             else{
                 votacaoResult.setStatus(Constante.STATUS_FINALIZADA);
-                genericResponse.setMessage(Constante.PAUTA_200_BUSCA_FINALIZADA);
-                genericResponse.setResponse(votacaoResult);
+                if(votacaoResult.getVotosSim()>votacaoResult.getVotosNao()){
+                    votacaoResult.setVencedor(Constante.VOTO_OPCAO1);
+                }else if(votacaoResult.getVotosSim()<votacaoResult.getVotosNao()){
+                    votacaoResult.setVencedor(Constante.VOTO_OPCAO2);
+                }else{
+                    votacaoResult.setVencedor(Constante.VOTO_EMPATE);
+                }
+                response.setMessage(Constante.PAUTA_200_BUSCA_FINALIZADA);
+                response.setValue(votacaoResult);
             }
         }catch (Exception e){
-            genericResponse.setCode(500);
-            genericResponse.setMessage(Constante.ERROR_500);
-            e.printStackTrace(); //TODO LOGAR
+            response.setCode(500);
+            response.setMessage(Constante.ERROR_500);
+            String param = "idPauta: "+ idPauta;
+            logger.error(ConstanteMsgLog.ERRO_LOG.formatted(idUsuario, "getResultadosVotacao()", param, e.getMessage()));
         }
-        return genericResponse;
+        return response;
     }
 }

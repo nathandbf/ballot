@@ -1,6 +1,6 @@
 package com.sc.ballot.message;
 
-import com.sc.ballot.constant.Constante;
+import com.sc.ballot.constant.ConstanteConfig;
 import com.sc.ballot.constant.ConstanteMsgLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ public class KafkaProducer {
     public void sendMessage(String msg) {
 
         ListenableFuture<SendResult<String, String>> future =
-                kafkaTemplate.send(Constante.KAFKA_TOPIC, msg);
+                kafkaTemplate.send(ConstanteConfig.KAFKA_TOPIC, msg);
         future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
 
             @Override

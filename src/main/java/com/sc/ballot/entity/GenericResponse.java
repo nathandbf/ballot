@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class GenericResponse implements Response{
     private int code;
     private String message;
-    private Response response;
+    private Response value;
 
     public GenericResponse() {
 
@@ -33,11 +33,11 @@ public class GenericResponse implements Response{
         this.message = message;
     }
 
-    public Response getResponse() {
-        return response;
+    public Response getValue() {
+        return value;
     }
 
-    public void setResponse(Response response) {
-        this.response = response;
+    public void setValue(Response response) {
+        this.value = response;
     }
 }

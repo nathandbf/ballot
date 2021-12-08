@@ -7,6 +7,7 @@ public class VotacaoResult implements Response {
     private int votosNao;
     private int duracaoSegundos;
     private String status;
+    private String vencedor;
 
     public VotacaoResult() {
     }
@@ -57,5 +58,13 @@ public class VotacaoResult implements Response {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getVencedor() {
+        return vencedor;
+    }
+
+    public void setVencedor(String vencedor) {
+        this.vencedor = vencedor;
     }
 }
