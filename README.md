@@ -1,7 +1,8 @@
-INFORMAÇÕES PRÉ EXECUÇÃO
+INFORMAÇÕES PRÉ EXECUÇÃO.
+
 Pré requisitos:
-Postgre
-Kafka e zookeeper (versões utilizadas kafka_2.12-2.8.1 e apache-zookeeper-3.7.0-bin)
+Postgre;
+Kafka e zookeeper (versões utilizadas kafka_2.12-2.8.1 e apache-zookeeper-3.7.0-bin);
 
 Para o SQL do banco de dados utilizar o script:
 ScriptBallot.sql
